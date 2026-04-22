@@ -1,2 +1,2 @@
 # AiroSync
-IOT Based Air Quality Monitoring System Using ESP32
+This repository contains the codebase and documentation for an IoT-based Air Quality Monitoring System built using ESP32. The project addresses the growing concern of air pollution by enabling real-time monitoring of harmful gases and environmental pollutants. It provides continuous air quality data and delivers alerts to help users understand potential health risks and make informed decisions.
