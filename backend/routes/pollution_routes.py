@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, make_response
-from backend.services.satellite_services import _fetch_from_api
-from backend.models.database import get_db
+#from backend.services.satellite_services import _fetch_from_api
+#from backend.models.database import get_db
 import math
 import time
 
