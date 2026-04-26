@@ -3,6 +3,8 @@ from backend.services.satellite_services import _fetch_from_api
 from backend.models.database import get_db
 import math
 import time
+import psycopg2
+import psycopg2.extras
 
 pollution = Blueprint("pollution", __name__)
 
@@ -122,7 +124,7 @@ def get_air_quality():
 
     try:
         conn = get_db()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         cur.execute("""
             SELECT air, co, temp, hum, id
@@ -207,7 +209,7 @@ def ingest_iot():
     conn = None
     try:
         conn = get_db()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         cur.execute(
             "INSERT INTO iot_readings (air, co, temp, hum) VALUES (%s, %s, %s, %s)",
@@ -230,7 +232,7 @@ def get_latest_iot():
     conn = None
     try:
         conn = get_db()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         cur.execute("""
             SELECT air, co, temp, hum, id

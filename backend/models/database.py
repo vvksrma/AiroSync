@@ -1,4 +1,5 @@
 import psycopg2
+import psycopg2.extras
 import os
 
 def get_db():
@@ -8,12 +9,13 @@ def get_db():
         raise Exception("DATABASE_URL not set")
 
     conn = psycopg2.connect(DATABASE_URL)
+
     return conn
 
 
 def init_db():
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS iot_readings (
