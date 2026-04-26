@@ -4,11 +4,10 @@ from backend.models.database import init_db
 
 def create_app():
     app = Flask(__name__)
-
     CORS(app)
 
     from backend.routes.pollution_routes import pollution
-    app.register_blueprint(pollution) 
+    app.register_blueprint(pollution)
 
     init_db()
 
@@ -17,3 +16,5 @@ def create_app():
         return {"status": "ok", "message": "AiroSense API is running"}
 
     return app
+
+app = create_app()
