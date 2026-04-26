@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Glass Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+
+/* Neon Gradient Text */
+.neon-text {
+  background: linear-gradient(to right, #4D7CFE, #B55CFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glow Hover Effect */
+.glow-hover:hover {
+  box-shadow: 0 0 20px rgba(93, 143, 255, 0.6);
+}
