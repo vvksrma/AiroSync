@@ -606,7 +606,7 @@ body {
     <!-- CHART -->
     <div class="chart-card">
       <div class="chart-header">
-        <span class="chart-title">AQI Trend — Last 12 Readings</span>
+        <span class="chart-title">AQI Trend — Last 1 Hour Readings</span>
         <div class="chart-legend">
           <div style="width:16px;height:2px;background:#3b82f6;border-radius:1px"></div>
           AQI History
@@ -716,13 +716,41 @@ function applyIoT(numId, statusId, barId, val, max, barColor, statusFn) {
 }
 
 // ══════════════════════════════════
-// HISTORY
+// HISTORY (TIME-BASED - LAST 1 HOUR)
 // ══════════════════════════════════
 const HIST_KEY = 'airosense_history_v2';
-const MAX_HIST = 12;
-function getHistory() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return []; } }
-function saveHistory(e) { const h = getHistory(); h.push(e); if (h.length > MAX_HIST) h.shift(); try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); } catch {} }
+const ONE_HOUR = 60 * 60 * 1000;
 
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HIST_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(e) {
+  const h = getHistory();
+
+  // add timestamp (force it if missing)
+  e.timestamp = Date.now();
+
+  h.push(e);
+
+  // keep only last 1 hour data
+  const now = Date.now();
+  const filtered = h.filter(item => now - item.timestamp <= ONE_HOUR);
+
+  try {
+    localStorage.setItem(HIST_KEY, JSON.stringify(filtered));
+  } catch {}
+}
+
+// helper for chart
+function getLastHourHistory() {
+  const now = Date.now();
+  return getHistory().filter(item => now - item.timestamp <= ONE_HOUR);
+}
 // ══════════════════════════════════
 // RENDER
 // ══════════════════════════════════
@@ -790,7 +818,7 @@ function renderDashboard(data) {
   const canvas = document.getElementById('aqiChart');
 
 if (canvas) {
-  const hist = getHistory();
+  const hist = getLastHourHistory();;
 
   const labels = hist.map(i => i.time);
 
@@ -895,6 +923,7 @@ if (canvas) {
 
   saveHistory({ 
   time: timeStr, 
+  timestamp: Date.now(), 
   aqi, 
   pm25, 
   pm10, 
