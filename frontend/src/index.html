@@ -1,185 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AiroSense — Air Quality Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: #080c14;
-    color: #f0f6ff;
-    font-family: 'Syne', sans-serif;
-    overflow-x: hidden;
-    min-height: 100vh;
-  }
+:root {
+  --bg: #060a12;
+  --surface: #0c1120;
+  --border: rgba(255,255,255,0.07);
+  --text: #eef2ff;
+  --muted: #6b7a9a;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
 
-  /* ── HEADER ── */
-  .header {
-    background: #0b0f1a;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 28px;
-    position: sticky; top: 0; z-index: 100;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .logo-wrap { display:flex; align-items:center; gap:12px; }
-  .logo-icon {
-    width:44px; height:44px;
-    background: linear-gradient(135deg,#3b82f6,#1d4ed8);
-    border-radius:10px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:20px;
-    box-shadow:0 0 20px rgba(59,130,246,.3);
-    flex-shrink:0;
-  }
-  .logo-title { font-size:22px; font-weight:800; color:#f0f6ff; line-height:1.1; }
-  .logo-sub   { font-size:10px; font-family:'DM Mono',monospace; color:#6b7a9a; text-transform:uppercase; letter-spacing:.1em; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-  .header-mid {
-    display:flex; align-items:center; gap:22px;
-    font-family:'DM Mono',monospace; font-size:12px; color:#9aaabe;
-  }
-  .live-indicator { display:flex; align-items:center; gap:7px; }
-  .live-dot {
-    width:8px; height:8px; background:#10b981; border-radius:50%;
-    animation: pulse 2s infinite;
-  }
-  .live-label { color:#10b981; font-weight:600; }
-  .separator { color:rgba(255,255,255,0.15); }
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  position: sticky; top: 0; z-index: 100;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.logo-wrap { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 0 18px rgba(59,130,246,.3);
+  flex-shrink: 0;
+}
+.logo-title { font-size: 20px; font-weight: 800; }
+.logo-sub { font-size: 9px; font-family: var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
 
-  .header-right { display:flex; align-items:center; gap:18px; }
-  .time-block { text-align:right; }
-  .time-val { font-size:18px; font-weight:700; color:#f0f6ff; font-family:'DM Mono',monospace; }
-  .time-sub { font-size:10px; color:#6b7a9a; }
-  .refresh-btn {
-    display:flex; align-items:center; gap:7px;
-    background:transparent;
-    border:1.5px solid rgba(59,130,246,.55);
-    color:#60a5fa; border-radius:8px;
-    padding:7px 16px;
-    font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
-    cursor:pointer; transition:all .2s;
-  }
-  .refresh-btn:hover { background:rgba(59,130,246,.12); border-color:#3b82f6; color:#93c5fd; }
-  .refresh-btn:disabled { opacity:.5; cursor:not-allowed; }
+.header-center {
+  display: flex; align-items: center; gap: 16px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+}
+.live-dot {
+  width: 8px; height: 8px; background: #10b981; border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+.live-label { color: #10b981; font-weight: 600; }
+.sep { color: rgba(255,255,255,.15); }
 
-  /* ── GRID ── */
-  .main { max-width:1380px; margin:0 auto; padding:18px 20px 32px; }
-  .row3 { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-bottom:13px; }
-  .row2c { display:grid; grid-template-columns:1fr 1fr 1fr; gap:13px; margin-bottom:13px; }
+.header-right { display: flex; align-items: center; gap: 14px; }
+.last-updated {
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+  text-align: right;
+}
+.last-updated strong { color: var(--text); display: block; font-size: 16px; font-weight: 700; }
+.refresh-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: 1.5px solid rgba(59,130,246,.5);
+  color: #60a5fa; border-radius: 8px;
+  padding: 6px 14px;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px;
+  cursor: pointer; transition: all .2s;
+}
+.refresh-btn:hover { background: rgba(59,130,246,.1); }
+.refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-  /* ── SENSOR CARD ── */
-  .sensor-card {
-    background:#0d1117;
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:10px;
-    padding:14px 16px 12px;
-    position:relative;
-    animation: fadeIn .35s ease both;
-  }
-  .card-top {
-    display:flex; justify-content:space-between; align-items:flex-start;
-    margin-bottom:10px;
-  }
-  .card-label {
-    font-size:11px; font-family:'DM Mono',monospace;
-    letter-spacing:.07em; text-transform:uppercase; color:#9aaabe;
-    line-height:1.2;
-  }
+/* ── MAIN ── */
+.main { max-width: 1360px; margin: 0 auto; padding: 20px 18px 40px; }
 
-  /* Badge */
-  .badge {
-    display:inline-block; padding:3px 10px; border-radius:5px;
-    font-size:10.5px; font-family:'DM Mono',monospace; font-weight:700;
-    letter-spacing:.05em; text-transform:uppercase; flex-shrink:0;
-  }
-  .badge-good     { background:rgba(16,185,129,.12); color:#10b981; border:1.5px solid #10b981; }
-  .badge-moderate { background:rgba(245,158,11,.12); color:#f59e0b; border:1.5px solid #f59e0b; }
-  .badge-poor     { background:rgba(239,68,68,.1);   color:#ef4444; border:1.5px solid #ef4444; }
-  .badge-severe   { background:rgba(127,29,29,.2);   color:#fca5a5; border:1.5px solid #991b1b; }
+/* ── SECTION HEADER ── */
+.section-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-family: var(--font-mono);
+  color: var(--muted); text-transform: uppercase; letter-spacing: .12em;
+  margin-bottom: 12px;
+}
+.section-header::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
 
-  /* Value row */
-  .value-row { display:flex; align-items:center; gap:13px; margin-bottom:6px; }
-  .icon-circle {
-    width:50px; height:50px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
-  }
-  .value-num {
-    font-size:50px; font-weight:800; font-family:'DM Mono',monospace;
-    color:#f0f6ff; line-height:1; letter-spacing:-1.5px;
-  }
-  .value-unit {
-    font-size:14px; font-family:'DM Mono',monospace; color:#6b7a9a;
-    align-self:flex-end; padding-bottom:7px; margin-left:2px;
-  }
+/* ── AQI HERO CARD ── */
+.aqi-hero {
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.6s ease, border-color 0.6s ease;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  animation: fadeIn .4s ease both;
+}
+.aqi-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
 
-  /* gauge area */
-  .gauge-wrap { width:100%; }
-  .gauge-wrap svg { display:block; width:100%; }
+.aqi-number-wrap { text-align: center; }
+.aqi-big-num {
+  font-size: 120px; font-weight: 800; line-height: 1;
+  font-family: var(--font-mono);
+  letter-spacing: -4px;
+  transition: color 0.5s ease;
+}
+.aqi-category-tag {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 18px;
+  border-radius: 20px;
+  font-size: 13px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase;
+  transition: background 0.5s ease, color 0.5s ease;
+}
 
-  /* below gauge */
-  .gauge-footer {
-    display:flex; justify-content:space-between; align-items:center;
-    margin-top:3px;
-  }
-  .gauge-unit-lbl { font-size:10.5px; font-family:'DM Mono',monospace; color:#6b7a9a; }
-  .gauge-status   { font-size:12.5px; font-family:'DM Mono',monospace; font-weight:700; }
+.aqi-bar-wrap { padding: 0 8px; }
+.aqi-bar-label {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+  margin-bottom: 6px;
+}
+.aqi-track {
+  width: 100%; height: 10px; border-radius: 6px;
+  background: rgba(255,255,255,.08);
+  position: relative; overflow: hidden;
+}
+.aqi-fill {
+  height: 100%; border-radius: 6px;
+  transition: width 0.8s cubic-bezier(.4,0,.2,1), background 0.6s ease;
+  position: relative;
+}
+.aqi-fill::after {
+  content: '';
+  position: absolute; right: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 18px;
+  background: white; border-radius: 2px;
+  box-shadow: 0 0 6px rgba(255,255,255,.6);
+}
+.aqi-scale {
+  display: flex; justify-content: space-between;
+  margin-top: 8px;
+}
+.aqi-scale-dot {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.aqi-scale-dot span:first-child {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.aqi-scale-dot span:last-child {
+  font-family: var(--font-mono); font-size: 9px; color: var(--muted);
+}
 
-  /* ── ADVISORY ── */
-  .advisory-bar {
-    background:#0d1117;
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:10px;
-    display:flex; align-items:center;
-    padding:12px 18px; gap:12px;
-  }
-  .advisory-icon {
-    width:30px; height:30px;
-    background:rgba(245,158,11,.12); border-radius:6px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:16px; flex-shrink:0;
-  }
-  .advisory-label {
-    font-size:12px; font-family:'DM Mono',monospace; font-weight:800;
-    color:#f59e0b; letter-spacing:.08em; flex-shrink:0;
-  }
-  .advisory-body { font-size:13px; color:#9aaabe; flex:1; }
-  .health-btn {
-    display:flex; align-items:center; gap:7px;
-    padding:6px 13px; border:1px solid rgba(255,255,255,.1);
-    border-radius:8px; background:transparent; color:#9aaabe;
-    font-size:11.5px; font-family:'DM Mono',monospace;
-    cursor:pointer; white-space:nowrap; transition:all .2s;
-  }
-  .health-btn:hover { border-color:rgba(255,255,255,.2); color:#f0f6ff; }
+.aqi-health-wrap { }
+.aqi-health-title {
+  font-size: 11px; font-family: var(--font-mono); color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px;
+}
+.aqi-health-desc {
+  font-size: 14px; color: var(--text); line-height: 1.7;
+  margin-bottom: 14px;
+}
+.aqi-badges { display: flex; flex-wrap: wrap; gap: 7px; }
+.aqi-badge {
+  padding: 4px 11px; border-radius: 6px;
+  font-size: 11px; font-family: var(--font-mono); font-weight: 500;
+  background: rgba(255,255,255,.06); color: var(--muted);
+}
 
-  /* misc */
-  .section-label {
-    font-size:10px; font-family:'DM Mono',monospace; color:#6b7a9a;
-    text-transform:uppercase; letter-spacing:.12em; margin-bottom:13px;
-  }
-  .info-card {
-    background:#0d1117; border:1px solid rgba(255,255,255,0.08);
-    border-radius:10px; padding:18px;
-  }
-  .info-card h4 { font-size:13px; font-weight:700; color:#f0f6ff; margin-bottom:11px; display:flex; align-items:center; gap:8px; }
-  .info-card ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
-  .info-card li { display:flex; gap:8px; font-size:11.5px; color:#9aaabe; }
+/* ── DATA GRID ── */
+.data-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 13px; margin-bottom: 16px; }
+.data-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 13px; margin-bottom: 16px; }
 
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-  @keyframes spin   { to{transform:rotate(360deg)} }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
-  .spin { animation:spin .8s linear infinite; }
+/* ── POLLUTANT CARD ── */
+.poll-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn .4s ease both;
+  transition: border-color .2s;
+}
+.poll-card:hover { border-color: rgba(255,255,255,.14); }
+.poll-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+  transition: background 0.5s ease;
+}
+
+.poll-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 12px;
+}
+.poll-label {
+  font-size: 10px; font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+}
+.poll-source {
+  font-size: 9px; font-family: var(--font-mono);
+  color: var(--muted); display: flex; align-items: center; gap: 4px;
+  opacity: .7;
+}
+
+.poll-value-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.poll-num {
+  font-size: 44px; font-weight: 800; font-family: var(--font-mono);
+  line-height: 1; letter-spacing: -1.5px;
+  transition: color 0.5s ease;
+}
+.poll-unit {
+  font-size: 12px; font-family: var(--font-mono); color: var(--muted);
+  padding-bottom: 6px;
+}
+.poll-status-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 6px;
+  font-size: 11px; font-family: var(--font-mono); font-weight: 600;
+  align-self: flex-start;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+.poll-status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Simple bar */
+.poll-bar-track {
+  height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,.07);
+  overflow: hidden;
+}
+.poll-bar-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.8s cubic-bezier(.4,0,.2,1), background 0.5s ease;
+}
+
+/* ── IOT CARD ── */
+.iot-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  animation: fadeIn .4s ease both;
+}
+.iot-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.iot-label {
+  font-size: 10px; font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+}
+.iot-source {
+  font-size: 9.5px; font-family: var(--font-mono); color: var(--muted);
+  display: flex; align-items: center; gap: 4px;
+}
+.iot-value-row { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 8px; }
+.iot-num {
+  font-size: 42px; font-weight: 800; font-family: var(--font-mono);
+  line-height: 1; letter-spacing: -1.5px;
+}
+.iot-unit { font-size: 13px; font-family: var(--font-mono); color: var(--muted); padding-bottom: 5px; }
+.iot-status {
+  font-size: 12px; font-family: var(--font-mono); font-weight: 600;
+  display: flex; align-items: center; gap: 5px;
+}
+.iot-bar-track {
+  height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,.07); overflow: hidden;
+  margin-top: 8px;
+}
+.iot-bar-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.8s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── CHART ── */
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.chart-title { font-size: 14px; font-weight: 700; }
+.chart-legend {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; font-family: var(--font-mono); color: var(--muted);
+}
+
+/* ── HEALTH CARDS ── */
+.health-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 13px; margin-bottom: 16px; }
+.health-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+}
+.health-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+.health-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.health-card li { font-size: 11.5px; color: var(--muted); display: flex; gap: 7px; }
+
+/* ── STATUS COLORS ── */
+.c-good    { color: #10b981; }
+.c-mod     { color: #f59e0b; }
+.c-poor    { color: #ef4444; }
+.c-severe  { color: #c084fc; }
+
+.bg-good   { background: rgba(16,185,129,.12); }
+.bg-mod    { background: rgba(245,158,11,.12); }
+.bg-poor   { background: rgba(239,68,68,.10); }
+.bg-severe { background: rgba(192,132,252,.10); }
+
+/* ── LOADING / ERROR ── */
+#loadingState {
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 0; gap: 14px;
+}
+#errorState {
+  display: none;
+  background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.22);
+  border-radius: 10px; padding: 22px; text-align: center; margin-bottom: 14px;
+}
+.spin { animation: spin .8s linear infinite; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .aqi-hero { grid-template-columns: 1fr 1fr; }
+  .aqi-health-wrap { grid-column: 1 / -1; }
+  .data-grid-4 { grid-template-columns: repeat(2,1fr); }
+  .health-grid { grid-template-columns: 1fr 1fr; }
+  .aqi-big-num { font-size: 90px; }
+}
+@media (max-width: 600px) {
+  .aqi-hero { grid-template-columns: 1fr; padding: 20px 16px; }
+  .aqi-big-num { font-size: 80px; }
+  .data-grid-2, .data-grid-4, .health-grid { grid-template-columns: 1fr; }
+  .header { padding: 10px 14px; }
+  .main { padding: 14px 12px 30px; }
+  .header-center { display: none; }
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes spin   { to{transform:rotate(360deg)} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 </style>
 </head>
 <body>
@@ -194,21 +386,21 @@
     </div>
   </div>
 
-  <div class="header-mid">
-    <div class="live-indicator">
+  <div class="header-center">
+    <div style="display:flex;align-items:center;gap:7px">
       <div class="live-dot" id="statusDot"></div>
       <span class="live-label" id="statusText">Connecting…</span>
     </div>
-    <span class="separator">|</span>
-    <span id="dataSource">Data: --</span>
-    <span class="separator">|</span>
-    <span>Sensor ID: <strong style="color:#f0f6ff" id="sensorIdHeader">--</strong></span>
+    <span class="sep">|</span>
+    <span>Sensor: <strong style="color:var(--text)" id="sensorIdHeader">--</strong></span>
+    <span class="sep">|</span>
+    <span id="dataSource">🛰️ Satellite + 📡 IoT</span>
   </div>
 
   <div class="header-right">
-    <div class="time-block">
-      <div class="time-val" id="timeDisplay">--:--</div>
-      <div class="time-sub">Updated now</div>
+    <div class="last-updated">
+      <strong id="timeDisplay">--:--</strong>
+      <span id="agoLabel">Updated now</span>
     </div>
     <button class="refresh-btn" id="refreshBtn" onclick="loadData()">
       <span id="refreshIcon" style="font-size:15px">↻</span> Refresh
@@ -219,588 +411,499 @@
 <!-- MAIN -->
 <div class="main">
 
-  <!-- Loading -->
-  <div id="loadingState" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:14px">
-    <div style="width:44px;height:44px;border:4px solid rgba(255,255,255,.08);border-top-color:#3b82f6;border-radius:50%" class="spin"></div>
-    <span style="color:#6b7a9a;font-family:'DM Mono',monospace;font-size:13px">Fetching sensor data…</span>
+  <div id="loadingState">
+    <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,.07);border-top-color:#3b82f6;border-radius:50%" class="spin"></div>
+    <span style="color:var(--muted);font-family:var(--font-mono);font-size:12px">Fetching sensor data…</span>
   </div>
 
-  <!-- Error -->
-  <div id="errorState" style="display:none;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.22);border-radius:10px;padding:24px;text-align:center;margin-bottom:14px">
-    <p style="color:#f87171;font-family:'DM Mono',monospace;font-size:13px;margin-bottom:12px" id="errorText">Failed to fetch data</p>
+  <div id="errorState">
+    <p style="color:#f87171;font-family:var(--font-mono);font-size:13px;margin-bottom:12px" id="errorText">Failed to fetch data</p>
     <button onclick="loadData()" style="padding:6px 16px;border:1px solid rgba(239,68,68,.35);border-radius:6px;color:#f87171;background:transparent;cursor:pointer;font-size:12px">Retry</button>
   </div>
 
-  <!-- DASHBOARD -->
   <div id="dashboard" style="display:none">
 
-    <!-- ROW 1 -->
-    <div class="row3">
+    <!-- AQI HERO -->
+    <div class="section-header">🌍 Overall Air Quality Index</div>
+    <div class="aqi-hero" id="aqiHero">
 
-      <!-- TEMPERATURE -->
-      <div class="sensor-card" style="animation-delay:.04s">
-        <div class="card-top">
-          <span class="card-label">Temperature</span>
-          <span class="badge badge-good" id="tempBadge">GOOD</span>
+      <!-- Big Number -->
+      <div class="aqi-number-wrap">
+        <div class="aqi-big-num" id="aqiBigNum">--</div>
+        <div class="aqi-category-tag" id="aqiCategoryTag">—</div>
+      </div>
+
+      <!-- Bar -->
+      <div class="aqi-bar-wrap">
+        <div class="aqi-bar-label">
+          <span>0 — Good</span>
+          <span>500 — Severe</span>
         </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.25)">
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-              <rect x="10" y="3" width="6" height="13" rx="3" stroke="#10b981" stroke-width="1.7" fill="none"/>
-              <circle cx="13" cy="20" r="4.5" stroke="#10b981" stroke-width="1.7" fill="none"/>
-              <rect x="12" y="9" width="2" height="10" rx="1" fill="#10b981"/>
-              <circle cx="13" cy="20" r="2.2" fill="#10b981"/>
-            </svg>
-          </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="tempValue">--</span>
-            <span class="value-unit">°C</span>
-          </div>
+        <div class="aqi-track">
+          <div class="aqi-fill" id="aqiFill" style="width:0%"></div>
         </div>
-        <div class="gauge-wrap"><svg id="tempSvg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">°Celsius</span>
-          <span class="gauge-status" id="tempStatus" style="color:#10b981">Comfortable</span>
+        <div class="aqi-scale">
+          <div class="aqi-scale-dot"><span style="background:#10b981"></span><span>Good</span></div>
+          <div class="aqi-scale-dot"><span style="background:#f59e0b"></span><span>Mod</span></div>
+          <div class="aqi-scale-dot"><span style="background:#ef4444"></span><span>Poor</span></div>
+          <div class="aqi-scale-dot"><span style="background:#c084fc"></span><span>V.Poor</span></div>
+          <div class="aqi-scale-dot"><span style="background:#7f1d1d"></span><span>Severe</span></div>
         </div>
       </div>
 
-      <!-- HUMIDITY -->
-      <div class="sensor-card" style="animation-delay:.08s">
-        <div class="card-top">
-          <span class="card-label">Humidity</span>
-          <span class="badge badge-good" id="humBadge">GOOD</span>
-        </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(56,189,248,.1);border:1.5px solid rgba(56,189,248,.25)">
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-              <path d="M13 3 C13 3 5 13 5 18 a8 8 0 0 0 16 0 C21 13 13 3 13 3Z" stroke="#38bdf8" stroke-width="1.7" stroke-linejoin="round" fill="none"/>
-              <path d="M9 19 Q11 16.5 13 18.5" stroke="#38bdf8" stroke-width="1.3" stroke-linecap="round" fill="none"/>
-            </svg>
-          </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="humValue">--</span>
-            <span class="value-unit">%</span>
-          </div>
-        </div>
-        <div class="gauge-wrap"><svg id="humSvg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">% Relative</span>
-          <span class="gauge-status" id="humStatus" style="color:#10b981">Ideal</span>
-        </div>
+      <!-- Health Info -->
+      <div class="aqi-health-wrap">
+        <div class="aqi-health-title">Health Advisory</div>
+        <div class="aqi-health-desc" id="aqiHealthDesc">Waiting for data…</div>
+        <div class="aqi-badges" id="aqiBadges"></div>
       </div>
 
-      <!-- CARBON MONOXIDE -->
-      <div class="sensor-card" style="animation-delay:.12s">
-        <div class="card-top">
-          <span class="card-label">Carbon Monoxide</span>
-          <span class="badge badge-good" id="coBadge">GOOD</span>
-        </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(251,146,60,.1);border:1.5px solid rgba(251,146,60,.28)">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <circle cx="18" cy="18" r="13.5" stroke="#fb923c" stroke-width="1.7" fill="none"/>
-              <text x="18" y="23" text-anchor="middle" font-size="11" font-weight="700" fill="#fb923c" font-family="DM Mono,monospace">CO</text>
-            </svg>
-          </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="coValue">--</span>
-            <span class="value-unit">ppm</span>
-          </div>
-        </div>
-        <div class="gauge-wrap"><svg id="coSvg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">ppm</span>
-          <span class="gauge-status" id="coStatus" style="color:#10b981">Safe Level</span>
-        </div>
-      </div>
+    </div>
 
-    </div><!-- /row1 -->
-
-    <!-- ROW 2 -->
-    <div class="row3">
-
-      <!-- RAW AIR QUALITY -->
-      <div class="sensor-card" style="animation-delay:.16s">
-        <div class="card-top">
-          <span class="card-label">Raw Air Quality</span>
-          <span class="badge badge-moderate" id="airBadge">MODERATE</span>
-        </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(167,139,250,.1);border:1.5px solid rgba(167,139,250,.25)">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M3 11 Q9 7 15 11 Q21 15 27 11" stroke="#a78bfa" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-              <path d="M3 17 Q9 13 15 17 Q21 21 27 17" stroke="#a78bfa" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-            </svg>
-          </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="airValue">--</span>
-            <span class="value-unit" style="font-size:12px;padding-bottom:9px">AQI</span>
-          </div>
-        </div>
-        <div class="gauge-wrap"><svg id="airSvg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">Sensor Value</span>
-          <span class="gauge-status" id="airStatus" style="color:#f59e0b">Moderate</span>
-        </div>
-      </div>
+    <!-- POLLUTANTS -->
+    <div class="section-header">🛰️ Satellite Pollutant Data</div>
+    <div class="data-grid-4" id="pollGrid">
 
       <!-- PM2.5 -->
-      <div class="sensor-card" style="animation-delay:.20s">
-        <div class="card-top">
-          <span class="card-label">PM2.5 (Fine)</span>
-          <span class="badge badge-moderate" id="pm25Badge">MODERATE</span>
+      <div class="poll-card" id="card-pm25" style="animation-delay:.05s">
+        <div class="poll-card-accent" style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:#60a5fa"></div>
+        <div class="poll-top">
+          <span class="poll-label">PM2.5 Fine</span>
+          <span class="poll-source">🛰️ Sat</span>
         </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(96,165,250,.1);border:1.5px solid rgba(96,165,250,.25)">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <circle cx="14" cy="7"  r="2.8" fill="#60a5fa"/>
-              <circle cx="7"  cy="14" r="2.2" fill="#60a5fa"/>
-              <circle cx="21" cy="14" r="2.2" fill="#60a5fa"/>
-              <circle cx="9"  cy="21" r="2.2" fill="#60a5fa"/>
-              <circle cx="19" cy="21" r="2.2" fill="#60a5fa"/>
-              <circle cx="14" cy="17" r="1.6" fill="#60a5fa" opacity=".55"/>
-            </svg>
+        <div class="poll-value-row">
+          <div>
+            <div style="display:flex;align-items:flex-end;gap:4px">
+              <span class="poll-num" id="pm25Val">--</span>
+              <span class="poll-unit">μg/m³</span>
+            </div>
           </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="pm25Value">--</span>
-            <span class="value-unit">μg/m³</span>
-          </div>
+          <div class="poll-status-pill" id="pm25Pill"><span class="dot" id="pm25Dot"></span><span id="pm25PillTxt">—</span></div>
         </div>
-        <div class="gauge-wrap"><svg id="pm25Svg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">μg/m³</span>
-          <span class="gauge-status" id="pm25Status" style="color:#f59e0b">Moderate</span>
-        </div>
+        <div class="poll-bar-track"><div class="poll-bar-fill" id="pm25Bar" style="width:0%"></div></div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-top:5px">Threshold: 60 μg/m³</div>
       </div>
 
       <!-- PM10 -->
-      <div class="sensor-card" style="animation-delay:.24s">
-        <div class="card-top">
-          <span class="card-label">PM10 (Coarse)</span>
-          <span class="badge badge-poor" id="pm10Badge">POOR</span>
+      <div class="poll-card" id="card-pm10" style="animation-delay:.10s">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:#f87171"></div>
+        <div class="poll-top">
+          <span class="poll-label">PM10 Coarse</span>
+          <span class="poll-source">🛰️ Sat</span>
         </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.22)">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <circle cx="14" cy="7"  r="3.2" fill="#f87171"/>
-              <circle cx="7"  cy="14" r="2.6" fill="#f87171"/>
-              <circle cx="21" cy="14" r="2.6" fill="#f87171"/>
-              <circle cx="9"  cy="21" r="2.6" fill="#f87171"/>
-              <circle cx="19" cy="21" r="2.6" fill="#f87171"/>
-            </svg>
+        <div class="poll-value-row">
+          <div style="display:flex;align-items:flex-end;gap:4px">
+            <span class="poll-num" id="pm10Val">--</span>
+            <span class="poll-unit">μg/m³</span>
           </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="pm10Value">--</span>
-            <span class="value-unit">μg/m³</span>
-          </div>
+          <div class="poll-status-pill" id="pm10Pill"><span class="dot" id="pm10Dot"></span><span id="pm10PillTxt">—</span></div>
         </div>
-        <div class="gauge-wrap"><svg id="pm10Svg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">μg/m³</span>
-          <span class="gauge-status" id="pm10Status" style="color:#ef4444">Poor</span>
-        </div>
+        <div class="poll-bar-track"><div class="poll-bar-fill" id="pm10Bar" style="width:0%"></div></div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-top:5px">Threshold: 100 μg/m³</div>
       </div>
 
-    </div><!-- /row2 -->
-
-    <!-- ROW 3: SO2 + O3 centered -->
-    <div class="row2c">
-      <div></div><!-- left spacer -->
-
       <!-- SO2 -->
-      <div class="sensor-card" style="animation-delay:.28s">
-        <div class="card-top">
-          <span class="card-label">SO₂ (Sulphur Dioxide)</span>
-          <span class="badge badge-good" id="so2Badge">GOOD</span>
+      <div class="poll-card" id="card-so2" style="animation-delay:.15s">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:#fbbf24"></div>
+        <div class="poll-top">
+          <span class="poll-label">SO₂ Sulphur</span>
+          <span class="poll-source">🛰️ Sat</span>
         </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(251,191,36,.08);border:1.5px solid rgba(251,191,36,.28)">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <circle cx="18" cy="18" r="13.5" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4.5 2.5" fill="none"/>
-              <text x="18" y="23" text-anchor="middle" font-size="9" font-weight="700" fill="#fbbf24" font-family="DM Mono,monospace">SO₂</text>
-            </svg>
+        <div class="poll-value-row">
+          <div style="display:flex;align-items:flex-end;gap:4px">
+            <span class="poll-num" id="so2Val">--</span>
+            <span class="poll-unit">μg/m³</span>
           </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="so2Value">--</span>
-            <span class="value-unit">μg/m³</span>
-          </div>
+          <div class="poll-status-pill" id="so2Pill"><span class="dot" id="so2Dot"></span><span id="so2PillTxt">—</span></div>
         </div>
-        <div class="gauge-wrap"><svg id="so2Svg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">μg/m³</span>
-          <span class="gauge-status" id="so2Status" style="color:#10b981">Good</span>
-        </div>
+        <div class="poll-bar-track"><div class="poll-bar-fill" id="so2Bar" style="width:0%"></div></div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-top:5px">Threshold: 80 μg/m³</div>
       </div>
 
       <!-- O3 -->
-      <div class="sensor-card" style="animation-delay:.32s">
-        <div class="card-top">
-          <span class="card-label">O₃ (Ozone)</span>
-          <span class="badge badge-moderate" id="o3Badge">MODERATE</span>
+      <div class="poll-card" id="card-o3" style="animation-delay:.20s">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:#34d399"></div>
+        <div class="poll-top">
+          <span class="poll-label">O₃ Ozone</span>
+          <span class="poll-source">🛰️ Sat</span>
         </div>
-        <div class="value-row">
-          <div class="icon-circle" style="background:rgba(52,211,153,.08);border:1.5px solid rgba(52,211,153,.28)">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <circle cx="18" cy="18" r="13.5" stroke="#34d399" stroke-width="1.7" fill="none"/>
-              <text x="18" y="23" text-anchor="middle" font-size="9.5" font-weight="700" fill="#34d399" font-family="DM Mono,monospace">O₃</text>
-            </svg>
+        <div class="poll-value-row">
+          <div style="display:flex;align-items:flex-end;gap:4px">
+            <span class="poll-num" id="o3Val">--</span>
+            <span class="poll-unit">μg/m³</span>
           </div>
-          <div style="display:flex;align-items:flex-end">
-            <span class="value-num" id="o3Value">--</span>
-            <span class="value-unit">μg/m³</span>
-          </div>
+          <div class="poll-status-pill" id="o3Pill"><span class="dot" id="o3Dot"></span><span id="o3PillTxt">—</span></div>
         </div>
-        <div class="gauge-wrap"><svg id="o3Svg" viewBox="0 0 260 110"></svg></div>
-        <div class="gauge-footer">
-          <span class="gauge-unit-lbl">μg/m³</span>
-          <span class="gauge-status" id="o3Status" style="color:#f59e0b">Moderate</span>
-        </div>
+        <div class="poll-bar-track"><div class="poll-bar-fill" id="o3Bar" style="width:0%"></div></div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-top:5px">Threshold: 100 μg/m³</div>
       </div>
 
-    </div><!-- /row3 -->
-
-    <!-- CHART (UNTOUCHED) -->
-    <div style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:22px;margin-bottom:13px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-        <span style="font-size:15px;font-weight:700;color:#f0f6ff">AQI Trend History</span>
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-family:'DM Mono',monospace;color:#6b7a9a">
-          <div style="width:18px;height:2px;background:#3b82f6;border-radius:1px"></div>
-          Last 12 Readings
-        </div>
-      </div>
-      <canvas id="aqiChart" height="80"></canvas>
     </div>
 
-    <!-- HEALTH SECTION (UNTOUCHED) -->
-    <div style="margin-bottom:13px">
-      <p class="section-label">Health Impact & Recommendations</p>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px">
-        <div class="info-card">
-          <h4>💨 PM2.5 (Fine)</h4>
-          <ul>
-            <li><span style="color:#6b7a9a">•</span>Ultra-fine particles enter lungs</li>
-            <li><span style="color:#6b7a9a">•</span>Can cross into bloodstream</li>
-            <li><span style="color:#6b7a9a">•</span>Linked to heart disease</li>
-            <li><span style="color:#6b7a9a">•</span>Affects brain development</li>
-          </ul>
+    <!-- IOT DATA -->
+    <div class="section-header">📡 Local IoT Sensor Data</div>
+    <div class="data-grid-4">
+
+      <!-- Temp -->
+      <div class="iot-card" style="animation-delay:.05s">
+        <div class="iot-top">
+          <span class="iot-label">Temperature</span>
+          <span class="iot-source">📡 Sensor</span>
         </div>
-        <div class="info-card">
-          <h4>🌬️ PM10 (Coarse)</h4>
-          <ul>
-            <li><span style="color:#6b7a9a">•</span>Irritates upper airways</li>
-            <li><span style="color:#6b7a9a">•</span>Causes coughing & wheezing</li>
-            <li><span style="color:#6b7a9a">•</span>Aggravates asthma</li>
-            <li><span style="color:#6b7a9a">•</span>Reduces lung function</li>
-          </ul>
+        <div class="iot-value-row">
+          <span class="iot-num" id="tempNum" style="color:#10b981">--</span>
+          <span class="iot-unit">°C</span>
         </div>
-        <div class="info-card">
-          <h4>✅ Safety Measures</h4>
-          <ul>
-            <li><span style="color:#6b7a9a">•</span>Use N95 when AQI > 100</li>
-            <li><span style="color:#6b7a9a">•</span>Close windows on high days</li>
-            <li><span style="color:#6b7a9a">•</span>Run HEPA purifiers</li>
-            <li><span style="color:#6b7a9a">•</span>Limit outdoor exercise</li>
-          </ul>
-        </div>
+        <div class="iot-status" id="tempStatus"><span style="width:6px;height:6px;background:#10b981;border-radius:50%"></span>Comfortable</div>
+        <div class="iot-bar-track"><div class="iot-bar-fill" id="tempBar" style="width:0%;background:#10b981"></div></div>
       </div>
+
+      <!-- Humidity -->
+      <div class="iot-card" style="animation-delay:.10s">
+        <div class="iot-top">
+          <span class="iot-label">Humidity</span>
+          <span class="iot-source">📡 Sensor</span>
+        </div>
+        <div class="iot-value-row">
+          <span class="iot-num" id="humNum" style="color:#38bdf8">--</span>
+          <span class="iot-unit">%</span>
+        </div>
+        <div class="iot-status" id="humStatus"><span style="width:6px;height:6px;background:#38bdf8;border-radius:50%"></span>Ideal</div>
+        <div class="iot-bar-track"><div class="iot-bar-fill" id="humBar" style="width:0%;background:#38bdf8"></div></div>
+      </div>
+
+      <!-- Raw AQI -->
+      <div class="iot-card" style="animation-delay:.15s">
+        <div class="iot-top">
+          <span class="iot-label">Raw Air Quality</span>
+          <span class="iot-source">📡 Sensor</span>
+        </div>
+        <div class="iot-value-row">
+          <span class="iot-num" id="airNum" style="color:#a78bfa">--</span>
+          <span class="iot-unit">AQI</span>
+        </div>
+        <div class="iot-status" id="airStatus"><span style="width:6px;height:6px;background:#a78bfa;border-radius:50%"></span>Moderate</div>
+        <div class="iot-bar-track"><div class="iot-bar-fill" id="airBar" style="width:0%;background:#a78bfa"></div></div>
+      </div>
+
+      <!-- CO -->
+      <div class="iot-card" style="animation-delay:.20s">
+        <div class="iot-top">
+          <span class="iot-label">Carbon Monoxide</span>
+          <span class="iot-source">📡 Sensor</span>
+        </div>
+        <div class="iot-value-row">
+          <span class="iot-num" id="coNum" style="color:#fb923c">--</span>
+          <span class="iot-unit">ppm</span>
+        </div>
+        <div class="iot-status" id="coStatus"><span style="width:6px;height:6px;background:#fb923c;border-radius:50%"></span>Safe Level</div>
+        <div class="iot-bar-track"><div class="iot-bar-fill" id="coBar" style="width:0%;background:#fb923c"></div></div>
+      </div>
+
     </div>
 
-    <!-- ADVISORY -->
-    <div class="advisory-bar" id="advisoryBar">
-      <div class="advisory-icon">⚠️</div>
-      <div class="advisory-label">ADVISORY</div>
-      <div class="advisory-body" id="advisoryBody">Waiting for sensor data.</div>
-      <button class="health-btn">🛡️ View Health Tips</button>
+    <!-- CHART -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">AQI Trend — Last 12 Readings</span>
+        <div class="chart-legend">
+          <div style="width:16px;height:2px;background:#3b82f6;border-radius:1px"></div>
+          AQI History
+        </div>
+      </div>
+      <canvas id="aqiChart" height="70"></canvas>
+    </div>
+
+    <!-- HEALTH -->
+    <div class="section-header">🛡️ Health Impact & Recommendations</div>
+    <div class="health-grid">
+      <div class="health-card">
+        <h4>💨 PM2.5 (Fine Particles)</h4>
+        <ul>
+          <li><span style="color:var(--muted)">•</span>Ultra-fine particles penetrate deep into lungs</li>
+          <li><span style="color:var(--muted)">•</span>Can cross into the bloodstream</li>
+          <li><span style="color:var(--muted)">•</span>Linked to cardiovascular disease</li>
+          <li><span style="color:var(--muted)">•</span>Affects neurological development</li>
+        </ul>
+      </div>
+      <div class="health-card">
+        <h4>🌬️ PM10 (Coarse Particles)</h4>
+        <ul>
+          <li><span style="color:var(--muted)">•</span>Irritates upper respiratory airways</li>
+          <li><span style="color:var(--muted)">•</span>Causes coughing and wheezing</li>
+          <li><span style="color:var(--muted)">•</span>Aggravates pre-existing asthma</li>
+          <li><span style="color:var(--muted)">•</span>Reduces lung function over time</li>
+        </ul>
+      </div>
+      <div class="health-card">
+        <h4>✅ Safety Measures</h4>
+        <ul>
+          <li><span style="color:var(--muted)">•</span>Wear N95 mask when AQI &gt; 100</li>
+          <li><span style="color:var(--muted)">•</span>Close windows on high pollution days</li>
+          <li><span style="color:var(--muted)">•</span>Run HEPA air purifiers indoors</li>
+          <li><span style="color:var(--muted)">•</span>Limit strenuous outdoor exercise</li>
+        </ul>
+      </div>
     </div>
 
   </div><!-- /dashboard -->
 </div><!-- /main -->
 
 <script>
-// ═══════════════════════════════════════════════════
-//  SEGMENTED GAUGE RENDERER
-//  Draws 20 chunky arc segments + needle, matching reference
-// ═══════════════════════════════════════════════════
-const SEG_COLORS = [
-  '#22c55e','#4ade80','#86efac','#a3e635',
-  '#d9f99d','#fde047','#facc15','#fb923c',
-  '#f97316','#ef4444'
-];
-
-function drawGauge(svgEl, pct, minLabel, maxLabel) {
-  // Arc center & radius
-  const cx = 130, cy = 105, r = 88;
-  const innerR = 70;
-  const startDeg = 210;   // left end of arc (clock-style degrees)
-  const sweepDeg = 180;   // total arc sweep
-  const numSeg   = 20;
-  const gapDeg   = 2.2;
-  const segDeg   = (sweepDeg - gapDeg * numSeg) / numSeg;
-
-  function toRad(d) { return (d - 90) * Math.PI / 180; }
-
-  function pt(deg, radius) {
-    const a = toRad(deg);
-    return [cx + radius * Math.cos(a), cy + radius * Math.sin(a)];
-  }
-
-  function segPath(s, e, ri, ro) {
-    const [x1,y1] = pt(s, ro);
-    const [x2,y2] = pt(e, ro);
-    const [x3,y3] = pt(e, ri);
-    const [x4,y4] = pt(s, ri);
-    const lg = (e - s) > 180 ? 1 : 0;
-    return `M${x1},${y1} A${ro},${ro},0,${lg},1,${x2},${y2} L${x3},${y3} A${ri},${ri},0,${lg},0,${x4},${y4} Z`;
-  }
-
-  let html = '';
-
-  for (let i = 0; i < numSeg; i++) {
-    const s = startDeg + i * (segDeg + gapDeg);
-    const e = s + segDeg;
-    const colorIdx = Math.floor(i / numSeg * SEG_COLORS.length);
-    const color    = SEG_COLORS[colorIdx];
-    const filled   = (i + 0.5) / numSeg <= pct;
-    const opacity  = filled ? 1 : 0.14;
-    html += `<path d="${segPath(s, e, innerR, r)}" fill="${color}" opacity="${opacity}"/>`;
-  }
-
-  // Needle
-  const needleDeg = startDeg + pct * sweepDeg;
-  const nRad = toRad(needleDeg);
-  const tipX  = cx + (r + 4) * Math.cos(nRad);
-  const tipY  = cy + (r + 4) * Math.sin(nRad);
-  const baseHalfAngle = toRad(needleDeg + 90);
-  const bw = 5;
-  const b1x = cx + bw * Math.cos(baseHalfAngle),  b1y = cy + bw * Math.sin(baseHalfAngle);
-  const b2x = cx - bw * Math.cos(baseHalfAngle),  b2y = cy - bw * Math.sin(baseHalfAngle);
-  html += `<polygon points="${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}" fill="white"/>`;
-  html += `<circle cx="${cx}" cy="${cy}" r="5.5" fill="white"/>`;
-
-  // Min / Max labels at arc ends
-  const [lx, ly] = pt(startDeg, r + 16);
-  const [rx2, ry2] = pt(startDeg + sweepDeg, r + 16);
-  html += `<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="11" fill="#6b7a9a" font-family="DM Mono,monospace">${minLabel}</text>`;
-  html += `<text x="${rx2}" y="${ry2+3}" text-anchor="middle" font-size="11" fill="#6b7a9a" font-family="DM Mono,monospace">${maxLabel}</text>`;
-
-  svgEl.innerHTML = html;
+// ══════════════════════════════════
+// AQI COLOR SYSTEM
+// ══════════════════════════════════
+function getAQITheme(aqi) {
+  if (aqi <= 50)  return { color:'#10b981', bgAlpha:'rgba(16,185,129,', cat:'Good',         desc:'Air quality is excellent. Outdoor activities are safe for everyone.', badges:['Safe for all','No precautions needed','Ideal for exercise'], heroBg:'rgba(16,185,129,0.06)', heroBorder:'rgba(16,185,129,0.2)' };
+  if (aqi <= 100) return { color:'#84cc16', bgAlpha:'rgba(132,204,22,',  cat:'Satisfactory', desc:'Generally safe. Sensitive individuals may notice minor discomfort.',  badges:['Generally safe','Sensitive groups: be aware'], heroBg:'rgba(132,204,22,0.06)', heroBorder:'rgba(132,204,22,0.2)' };
+  if (aqi <= 200) return { color:'#f59e0b', bgAlpha:'rgba(245,158,11,',  cat:'Moderate',     desc:'Sensitive groups should limit prolonged outdoor exertion. Use a mask if needed.', badges:['Limit long outdoor stays','N95 recommended','Asthma patients: be cautious'], heroBg:'rgba(245,158,11,0.06)', heroBorder:'rgba(245,158,11,0.2)' };
+  if (aqi <= 300) return { color:'#ef4444', bgAlpha:'rgba(239,68,68,',   cat:'Poor',         desc:'Everyone may experience health effects. Avoid outdoor activity where possible.', badges:['Wear N95 mask','Stay indoors','Run air purifier'], heroBg:'rgba(239,68,68,0.06)', heroBorder:'rgba(239,68,68,0.25)' };
+  if (aqi <= 400) return { color:'#c084fc', bgAlpha:'rgba(192,132,252,', cat:'Very Poor',    desc:'Health warnings for all. Avoid outdoor activity entirely. Keep windows closed.', badges:['⚠️ Health alert','No outdoor activity','Air purifier essential'], heroBg:'rgba(192,132,252,0.07)', heroBorder:'rgba(192,132,252,0.25)' };
+  return             { color:'#f87171', bgAlpha:'rgba(248,113,113,',  cat:'Severe',       desc:'Health emergency. Minimize all outdoor exposure immediately. Seek medical advice if symptomatic.', badges:['🚨 Emergency level','Stay indoors','Seek medical help'], heroBg:'rgba(248,113,113,0.08)', heroBorder:'rgba(248,113,113,0.3)' };
 }
 
-function setGauge(svgId, value, min, max, minLbl, maxLbl) {
-  const el = document.getElementById(svgId);
-  if (!el) return;
-  const pct = Math.min(Math.max((value - min) / (max - min), 0), 1);
-  drawGauge(el, pct, minLbl ?? String(min), maxLbl ?? String(max));
+// ══════════════════════════════════
+// POLLUTANT STATUS
+// ══════════════════════════════════
+function pollStatus(val, thresholds) {
+  // thresholds: [good, moderate] — above moderate = poor
+  if (val <= thresholds[0]) return { txt:'Good',     color:'#10b981', bg:'rgba(16,185,129,.12)' };
+  if (val <= thresholds[1]) return { txt:'Moderate', color:'#f59e0b', bg:'rgba(245,158,11,.12)' };
+  return                           { txt:'Poor',     color:'#ef4444', bg:'rgba(239,68,68,.1)'  };
 }
 
-// ═══════════════════════════════════════════════════
-//  STATUS / BADGE HELPERS
-// ═══════════════════════════════════════════════════
-const STATUS = {
-  temp:  v => v < 20  ? ['Cool','good']        : v < 30 ? ['Comfortable','good']  : v < 38 ? ['Warm','moderate'] : ['Hot','poor'],
-  hum:   v => v>=30&&v<=60 ? ['Ideal','good']  : (v<20||v>80) ? ['Extreme','poor'] : ['Moderate','moderate'],
-  co:    v => v < 2   ? ['Safe Level','good']  : v < 5  ? ['Moderate','moderate'] : ['Danger','poor'],
-  air:   v => v<=100  ? ['Good','good']        : v<=200 ? ['Moderate','moderate'] : ['Poor','poor'],
-  pm25:  v => v<=30   ? ['Good','good']        : v<=60  ? ['Moderate','moderate'] : ['Poor','poor'],
-  pm10:  v => v<=50   ? ['Good','good']        : v<=100 ? ['Moderate','moderate'] : ['Poor','poor'],
-  so2:   v => v<=40   ? ['Good','good']        : v<=80  ? ['Moderate','moderate'] : ['Poor','poor'],
-  o3:    v => v<=50   ? ['Good','good']        : v<=100 ? ['Moderate','moderate'] : ['Poor','poor'],
+function setBar(barId, val, max) {
+  const el = document.getElementById(barId);
+  if (el) el.style.width = Math.min((val/max)*100, 100) + '%';
+}
+
+function applyPollCard(prefix, val, max, thresholds, color) {
+  const s = pollStatus(val, thresholds);
+  const num = document.getElementById(prefix+'Val');
+  if (num) { num.textContent = val.toFixed(1); num.style.color = s.color; }
+  const pill = document.getElementById(prefix+'Pill');
+  if (pill) { pill.style.background = s.bg; pill.style.color = s.color; }
+  const dot = document.getElementById(prefix+'Dot');
+  if (dot) dot.style.background = s.color;
+  const txt = document.getElementById(prefix+'PillTxt');
+  if (txt) txt.textContent = s.txt;
+  const bar = document.getElementById(prefix+'Bar');
+  if (bar) { bar.style.width = Math.min((val/max)*100,100)+'%'; bar.style.background = s.color; }
+}
+
+// ══════════════════════════════════
+// IOT STATUS
+// ══════════════════════════════════
+const IOT_STATUS = {
+  temp: v => v < 20 ? ['Cool','#60a5fa'] : v < 30 ? ['Comfortable','#10b981'] : v < 38 ? ['Warm','#f59e0b'] : ['Hot','#ef4444'],
+  hum:  v => v>=30&&v<=60 ? ['Ideal','#10b981'] : (v<20||v>80) ? ['Extreme','#ef4444'] : ['Moderate','#f59e0b'],
+  co:   v => v < 2 ? ['Safe Level','#10b981'] : v < 5 ? ['Elevated','#f59e0b'] : ['Danger!','#ef4444'],
+  air:  v => v <= 100 ? ['Good','#10b981'] : v <= 200 ? ['Moderate','#f59e0b'] : ['Poor','#ef4444'],
 };
-const STATUS_COLOR = { good:'#10b981', moderate:'#f59e0b', poor:'#ef4444', severe:'#fca5a5' };
 
-function applyStatus(badgeId, statusId, text, type) {
-  const b = document.getElementById(badgeId);
-  if (b) { b.textContent = text.toUpperCase(); b.className = 'badge badge-' + type; }
-  const s = document.getElementById(statusId);
-  if (s) { s.textContent = text; s.style.color = STATUS_COLOR[type] || '#9aaabe'; }
+function applyIoT(numId, statusId, barId, val, max, barColor, statusFn) {
+  const [txt, col] = statusFn(val);
+  const numEl = document.getElementById(numId);
+  if (numEl) { numEl.textContent = val.toFixed(val < 10 ? 2 : 1); numEl.style.color = col; }
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) {
+    statusEl.innerHTML = `<span style="width:6px;height:6px;background:${col};border-radius:50%;display:inline-block"></span>&nbsp;${txt}`;
+    statusEl.style.color = col;
+  }
+  const barEl = document.getElementById(barId);
+  if (barEl) { barEl.style.width = Math.min((val/max)*100,100)+'%'; barEl.style.background = col; }
 }
 
-// ═══════════════════════════════════════════════════
-//  HISTORY / AQI
-// ═══════════════════════════════════════════════════
-const HISTORY_KEY = 'airosense_history';
-const MAX_HISTORY = 12;
+// ══════════════════════════════════
+// HISTORY
+// ══════════════════════════════════
+const HIST_KEY = 'airosense_history_v2';
+const MAX_HIST = 12;
+function getHistory() { try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch { return []; } }
+function saveHistory(e) { const h = getHistory(); h.push(e); if (h.length > MAX_HIST) h.shift(); try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); } catch {} }
 
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
-}
-function saveHistory(entry) {
-  const h = getHistory(); h.push(entry);
-  if (h.length > MAX_HISTORY) h.shift();
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {}
-}
-
-function getAQIInfo(aqi) {
-  if (aqi<=50)  return {category:'Good',        color:'#10b981', advice:'Air quality is excellent. Enjoy outdoor activities freely.'};
-  if (aqi<=100) return {category:'Satisfactory', color:'#84cc16', advice:'Generally safe. Most people can enjoy outdoor activities.'};
-  if (aqi<=200) return {category:'Moderate',     color:'#f59e0b', advice:'Sensitive groups should limit prolonged outdoor exposure.'};
-  if (aqi<=300) return {category:'Poor',          color:'#ef4444', advice:'Reduce outdoor activity. Use masks when going outside.'};
-  if (aqi<=400) return {category:'Very Poor',     color:'#dc2626', advice:'Avoid outdoor activity. Stay indoors with air purifier.'};
-  return {category:'Severe', color:'#7f1d1d', advice:'Health emergency. Minimize all outdoor exposure immediately.'};
-}
-
-// ═══════════════════════════════════════════════════
-//  RENDER DASHBOARD
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════
+// RENDER
+// ══════════════════════════════════
 function renderDashboard(data) {
   const { iot, pollutants, aqi, category } = data;
-  const air  = iot?.air  ?? null;
-  const co   = iot?.co   ?? null;
-  const temp = iot?.temp ?? null;
-  const hum  = iot?.hum  ?? null;
+  const air  = iot?.air  ?? 0;
+  const co   = iot?.co   ?? 0;
+  const temp = iot?.temp ?? 0;
+  const hum  = iot?.hum  ?? 0;
   const id   = iot?.id   ?? '--';
   const pm25 = pollutants?.pm2_5 ?? 0;
   const pm10 = pollutants?.pm10  ?? 0;
   const so2  = pollutants?.so2   ?? 0;
   const o3   = pollutants?.o3    ?? 0;
 
-  const aqiInfo = getAQIInfo(aqi);
+  const theme = getAQITheme(aqi);
 
-  // TEMPERATURE
-  if (temp !== null) {
-    document.getElementById('tempValue').textContent = temp.toFixed(1);
-    setGauge('tempSvg', temp, 0, 50, '0', '50');
-    const [t,c] = STATUS.temp(temp); applyStatus('tempBadge','tempStatus',t,c);
+  // — AQI Hero —
+  const hero = document.getElementById('aqiHero');
+  if (hero) {
+    hero.style.background = theme.heroBg;
+    hero.style.borderColor = theme.heroBorder;
+  }
+  const bigNum = document.getElementById('aqiBigNum');
+  if (bigNum) { bigNum.textContent = aqi; bigNum.style.color = theme.color; }
+  const catTag = document.getElementById('aqiCategoryTag');
+  if (catTag) {
+    catTag.textContent = theme.cat;
+    catTag.style.background = theme.bgAlpha+'0.15)';
+    catTag.style.color = theme.color;
+    catTag.style.border = '1.5px solid '+theme.bgAlpha+'0.35)';
+  }
+  const fill = document.getElementById('aqiFill');
+  if (fill) { fill.style.width = Math.min((aqi/500)*100, 100)+'%'; fill.style.background = theme.color; }
+  const desc = document.getElementById('aqiHealthDesc');
+  if (desc) desc.textContent = theme.desc;
+  const badges = document.getElementById('aqiBadges');
+  if (badges) {
+    badges.innerHTML = theme.badges.map(b => `<span class="aqi-badge">${b}</span>`).join('');
   }
 
-  // HUMIDITY
-  if (hum !== null) {
-    document.getElementById('humValue').textContent = hum.toFixed(1);
-    setGauge('humSvg', hum, 0, 100, '0%', '100%');
-    const [t,c] = STATUS.hum(hum); applyStatus('humBadge','humStatus',t,c);
-  }
+  // — Pollutants —
+  applyPollCard('pm25', pm25, 250, [30, 60],  '#60a5fa');
+  applyPollCard('pm10', pm10, 600, [50, 100], '#f87171');
+  applyPollCard('so2',  so2,  100, [40, 80],  '#fbbf24');
+  applyPollCard('o3',   o3,   200, [50, 100], '#34d399');
 
-  // CO
-  if (co !== null) {
-    document.getElementById('coValue').textContent = co.toFixed(2);
-    setGauge('coSvg', co, 0, 10, '0', '10');
-    const [t,c] = STATUS.co(co); applyStatus('coBadge','coStatus',t,c);
-  }
+  // — IoT —
+  applyIoT('tempNum','tempStatus','tempBar', temp, 50, '#10b981', IOT_STATUS.temp);
+  applyIoT('humNum', 'humStatus', 'humBar',  hum,  100,'#38bdf8', IOT_STATUS.hum);
+  applyIoT('airNum', 'airStatus', 'airBar',  air,  500,'#a78bfa', IOT_STATUS.air);
+  applyIoT('coNum',  'coStatus',  'coBar',   co,   10, '#fb923c', IOT_STATUS.co);
 
-  // AIR
-  if (air !== null) {
-    document.getElementById('airValue').textContent = air.toFixed(0);
-    setGauge('airSvg', air, 0, 500, '0', '500');
-    const [t,c] = STATUS.air(air); applyStatus('airBadge','airStatus',t,c);
-  }
-
-  // PM2.5
-  document.getElementById('pm25Value').textContent = pm25.toFixed(1);
-  setGauge('pm25Svg', pm25, 0, 250, '0', '250');
-  const [p25t,p25c] = STATUS.pm25(pm25); applyStatus('pm25Badge','pm25Status',p25t,p25c);
-
-  // PM10
-  document.getElementById('pm10Value').textContent = pm10.toFixed(1);
-  setGauge('pm10Svg', pm10, 0, 600, '0', '600');
-  const [p10t,p10c] = STATUS.pm10(pm10); applyStatus('pm10Badge','pm10Status',p10t,p10c);
-
-  // SO2
-  document.getElementById('so2Value').textContent = so2.toFixed(1);
-  setGauge('so2Svg', so2, 0, 100, '0', '100');
-  const [st,sc] = STATUS.so2(so2); applyStatus('so2Badge','so2Status',st,sc);
-
-  // O3
-  document.getElementById('o3Value').textContent = o3.toFixed(1);
-  setGauge('o3Svg', o3, 0, 200, '0', '200');
-  const [ot,oc] = STATUS.o3(o3); applyStatus('o3Badge','o3Status',ot,oc);
-
-  // Header
+  // — Header —
   document.getElementById('sensorIdHeader').textContent = id;
-  document.getElementById('dataSource').textContent = 'Data: Satellite + IoT';
-  document.getElementById('statusText').textContent  = 'Live Data';
+  document.getElementById('statusText').textContent = 'Live Data';
+
   const now = new Date();
-  document.getElementById('timeDisplay').textContent =
-    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('timeDisplay').textContent = timeStr;
+  document.getElementById('agoLabel').textContent = 'Updated now';
+  startAgoTimer(now);
 
-  // Advisory
-  document.getElementById('advisoryBody').innerHTML =
-    `Air quality is <strong style="color:${aqiInfo.color}">${category}.</strong> ${aqiInfo.advice}`;
-
-  // Chart
+  // — Chart —
   const canvas = document.getElementById('aqiChart');
   if (canvas) {
     const hist   = getHistory();
     const labels = hist.map(i => i.time);
-    const values = hist.map(i => i.aqi);
-    if (window.aqiChart?.destroy) window.aqiChart.destroy();
-    window.aqiChart = new Chart(canvas.getContext('2d'), {
+    const vals   = hist.map(i => i.aqi);
+    if (window._aqiChart?.destroy) window._aqiChart.destroy();
+    window._aqiChart = new Chart(canvas.getContext('2d'), {
       type: 'line',
-      data: { labels, datasets:[{ label:'AQI', data:values, tension:.4, borderWidth:2, pointRadius:3,
-        borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.08)', fill:true }] },
-      options: { responsive:true, plugins:{legend:{display:false}},
-        scales:{
-          x:{ticks:{color:'#9aaabe'},grid:{color:'rgba(255,255,255,.04)'}},
-          y:{beginAtZero:true,max:500,ticks:{color:'#9aaabe'},grid:{color:'rgba(255,255,255,.04)'}}
+      data: {
+        labels,
+        datasets:[{
+          label: 'AQI',
+          data: vals,
+          tension: .4,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#3b82f6',
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.07)',
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks:{color:'#6b7a9a', font:{family:'DM Mono'}}, grid:{color:'rgba(255,255,255,.04)'} },
+          y: { beginAtZero:true, max:500, ticks:{color:'#6b7a9a', font:{family:'DM Mono'}}, grid:{color:'rgba(255,255,255,.04)'} }
         }
       }
     });
   }
-  const timeLabel = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  saveHistory({ time:timeLabel, aqi });
+
+  saveHistory({ time: timeStr, aqi });
 }
 
-// ═══════════════════════════════════════════════════
-//  LOAD DATA
-// ═══════════════════════════════════════════════════
-const API_URL    = 'http://127.0.0.1:5000/air-quality/latest';
-let isLoading    = false;
-let lastCoords   = null;
+// ══════════════════════════════════
+// "X sec ago" TIMER
+// ══════════════════════════════════
+let _lastUpdate = null;
+let _agoInterval = null;
+function startAgoTimer(t) {
+  _lastUpdate = t;
+  if (_agoInterval) clearInterval(_agoInterval);
+  _agoInterval = setInterval(() => {
+    if (!_lastUpdate) return;
+    const s = Math.floor((Date.now() - _lastUpdate.getTime()) / 1000);
+    const el = document.getElementById('agoLabel');
+    if (!el) return;
+    if (s < 10)  el.textContent = 'Updated just now';
+    else if (s < 60) el.textContent = `Updated ${s}s ago`;
+    else el.textContent = `Updated ${Math.floor(s/60)}m ago`;
+  }, 3000);
+}
+
+// ══════════════════════════════════
+// LOAD
+// ══════════════════════════════════
+const API_URL = 'http://127.0.0.1:5000/air-quality/latest';
+let isLoading  = false;
+let lastCoords = null;
 
 async function loadData() {
   if (isLoading) return;
   isLoading = true;
 
-  const loadingEl   = document.getElementById('loadingState');
-  const errorEl     = document.getElementById('errorState');
-  const dashboardEl = document.getElementById('dashboard');
-  const refreshBtn  = document.getElementById('refreshBtn');
-  const refreshIcon = document.getElementById('refreshIcon');
+  const loadEl  = document.getElementById('loadingState');
+  const errEl   = document.getElementById('errorState');
+  const dashEl  = document.getElementById('dashboard');
+  const btn     = document.getElementById('refreshBtn');
+  const icon    = document.getElementById('refreshIcon');
 
-  loadingEl.style.display = 'flex';
-  errorEl.style.display   = 'none';
-  refreshBtn.disabled     = true;
-  refreshIcon.classList.add('spin');
+  loadEl.style.display = 'flex';
+  errEl.style.display  = 'none';
+  btn.disabled = true;
+  icon.classList.add('spin');
 
   try {
     let lat, lon;
     if (lastCoords) {
-      ({lat, lon} = lastCoords);
+      ({ lat, lon } = lastCoords);
     } else {
       try {
         const pos = await new Promise((res,rej) =>
           navigator.geolocation.getCurrentPosition(res, rej, {timeout:3000})
         );
         lat = pos.coords.latitude; lon = pos.coords.longitude;
-        lastCoords = {lat, lon};
+        lastCoords = { lat, lon };
       } catch { lat = 28.61; lon = 77.23; }
     }
 
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 100000);
-    const resp = await fetch(`${API_URL}?lat=${lat}&lon=${lon}`, {signal:controller.signal});
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 10000);
+    const resp = await fetch(`${API_URL}?lat=${lat}&lon=${lon}`, {signal:ctrl.signal});
     clearTimeout(tid);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     renderDashboard(data);
-    dashboardEl.style.display = 'block';
+    dashEl.style.display = 'block';
 
-  } catch (err) {
-    errorEl.style.display = 'block';
+  } catch(err) {
+    errEl.style.display = 'block';
     document.getElementById('errorText').textContent =
-      err.name === 'AbortError' ? 'Request timeout — backend slow' : `Error: ${err.message}`;
+      err.name === 'AbortError' ? 'Request timed out — backend may be slow' : `Error: ${err.message}`;
 
+    // Demo fallback on first load
     if (!lastCoords) {
       renderDashboard({
-        aqi:150, category:'Moderate',
-        pollutants:{ pm2_5:75, pm10:120, so2:18, o3:42 },
-        iot:{ air:280, co:2.3, temp:27.8, hum:58.4, id:'AIR-2025-01' }
+        aqi: 150, category: 'Moderate',
+        pollutants: { pm2_5:75, pm10:120, so2:18, o3:42 },
+        iot: { air:280, co:2.3, temp:27.8, hum:58.4, id:'AIR-2025-01' }
       });
-      dashboardEl.style.display = 'block';
+      dashEl.style.display = 'block';
     }
   } finally {
-    loadingEl.style.display = 'none';
-    refreshBtn.disabled     = false;
-    refreshIcon.classList.remove('spin');
+    loadEl.style.display = 'none';
+    btn.disabled = false;
+    icon.classList.remove('spin');
     isLoading = false;
   }
 }

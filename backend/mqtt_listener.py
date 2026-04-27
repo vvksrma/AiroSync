@@ -37,6 +37,7 @@ def on_message(client, userdata, msg):
         print("Error:", e)
 
 client = mqtt.Client()
+client.reconnect_delay_set(min_delay=1, max_delay=120)
 client.username_pw_set(MQTT_USER, MQTT_PASS)
 
 client.on_connect = on_connect
